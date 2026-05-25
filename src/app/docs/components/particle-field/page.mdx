@@ -1,0 +1,40 @@
+import ParticleFieldCanvas from '@/components/hero/ParticleFieldCanvas'
+
+# Particle Field
+
+A starfield-style particle system that gently auto-rotates and warps softly near the cursor. Good as a hero background, section divider, or empty-state filler.
+
+<ComponentPreview name="particle-field">
+  <ParticleFieldCanvas />
+</ComponentPreview>
+
+## Usage
+
+The wrapper component (`ParticleFieldCanvas`) handles the Canvas setup, `prefers-reduced-motion`, and mobile particle-count scaling. Drop it inside any positioned container — it fills the parent absolutely.
+
+```tsx
+import ParticleFieldCanvas from '@/components/hero/ParticleFieldCanvas';
+
+export default function Hero() {
+  return (
+    <section className="relative h-screen bg-[#0a0a0a]">
+      <ParticleFieldCanvas />
+      <div className="relative z-10">{/* your content */}</div>
+    </section>
+  );
+}
+```
+
+## Notes
+
+- **Performance.** Particle count auto-scales: 3000 on desktop, 1200 on mobile. The mouse-warp inner loop runs once per frame — keep this in mind on lower-end devices.
+- **Accessibility.** When `prefers-reduced-motion: reduce` is set, auto-rotation and mouse warping are both disabled.
+- **SSR.** The component is marked `'use client'`. React Three Fiber's `Canvas` defers WebGL setup to mount, so there's no SSR mismatch.
+
+## Customization
+
+Open `ParticleField.tsx` and tweak:
+- `colorA` / `colorB` — the two-color gradient particles lerp between.
+- `radius` (in the `useMemo` block) — the sphere distribution bounds.
+- `radius` and `strength` in `useFrame` — the cursor warp behavior.
+- `pointsMaterial` `size`, `opacity`, `blending` — the particle look.

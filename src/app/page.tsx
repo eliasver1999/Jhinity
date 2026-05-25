@@ -1,9 +1,4 @@
-import dynamic from 'next/dynamic';
-
-const ParticleFieldCanvas = dynamic(
-  () => import('@/components/hero/ParticleFieldCanvas'),
-  { ssr: false }
-);
+import ParticleFieldCanvas from '@/components/hero/ParticleFieldCanvas';
 
 export default function Home() {
   return (
