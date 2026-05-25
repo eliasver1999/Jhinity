@@ -1,0 +1,58 @@
+import WaveMeshCanvas from '@/components/hero/WaveMeshCanvas'
+
+# Wave Mesh
+
+A topographic surface — subdivided plane, vertices displaced by layered simplex noise, rendered as a wireframe with elevation-driven gradient. The look that Stripe and Linear use on dark hero sections: techy, premium, alive without screaming.
+
+<ComponentPreview name="wave-mesh" demo={WaveMeshCanvas} />
+
+## Usage
+
+```tsx
+import WaveMeshCanvas from '@/components/hero/WaveMeshCanvas';
+
+export default function Hero() {
+  return (
+    <section className="relative h-screen bg-[#0a0a0a]">
+      <WaveMeshCanvas
+        colorA="#7F77DD"
+        colorB="#1D9E75"
+        amplitude={0.5}
+        frequency={1.0}
+        speed={0.5}
+      />
+      <div className="relative z-10">{/* your content */}</div>
+    </section>
+  );
+}
+```
+
+## How it works
+
+The mesh is an 80×80 `<planeGeometry>` rotated to a near-horizontal angle (`rotation.x = -Math.PI / 2.5`) and sat slightly below the camera so it stretches to a "horizon."
+
+Each vertex's elevation is computed in the **vertex shader** — running on the GPU, so even at 6400 vertices per frame it costs nothing measurable:
+
+```glsl
+float n1 = snoise(vec2(x * frequency + t * 0.3, y * frequency + t * 0.2));
+float n2 = snoise(vec2(x * frequency * 2.1 + t * 0.5, y * frequency * 2.1 - t * 0.4)) * 0.4;
+pos.z += (n1 + n2) * amplitude;
+```
+
+Two layered noise fields at different frequencies and time offsets — a coarse one drives the big swells, a finer one rides on top adding texture. The sum gets passed to the fragment as a varying.
+
+The fragment shader does a simple elevation-based blend: peaks get `colorA`, troughs get `colorB`. With wireframe rendering, the lines themselves change color as they rise and fall.
+
+## Notes
+
+- **Performance.** All displacement happens on the GPU. The vertex shader runs once per vertex per frame (~6400 invocations), the fragment shader runs once per line pixel. Stays cheap even at 4k.
+- **Wireframe rendering.** Set on the `<shaderMaterial wireframe />` prop — three.js draws the indexed triangles as lines instead of filled tris. Each shared edge gets drawn twice (once per adjacent triangle), but that's invisible.
+- **Accessibility.** `prefers-reduced-motion: reduce` freezes the animation via `speed={0}` from the wrapper. The mesh still renders, just static.
+- **DPR.** Capped at `1.5` since wireframe edges look fine without high pixel density, and it cuts GPU cost ~4× on high-DPR displays.
+
+## Customization
+
+- **Solid fill instead of wireframe.** Remove the `wireframe` prop on `shaderMaterial`. You'll want to add lighting to the fragment shader (the elevation gradient alone looks flat). Easiest path: swap to `meshStandardMaterial` and inject the vertex displacement via `onBeforeCompile`.
+- **Higher detail.** Bump `<planeGeometry>` segments to `120, 120` for tighter wave detail. Cost scales linearly.
+- **Add a third octave** of noise for more chaotic surface. Lower amplitude per octave keeps the result balanced.
+- **Sea-foam effect.** In the fragment, brighten the color when `vElevation > someThreshold` to add white caps to wave peaks.

@@ -41,6 +41,7 @@ export default async function ComponentPreview({
       files={files}
       deps={entry.deps}
       controls={entry.controls ?? []}
+      componentName={entry.componentName}
       demo={demo}
     >
       {children}

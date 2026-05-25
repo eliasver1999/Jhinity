@@ -1,0 +1,48 @@
+import DistortedSphereCanvas from '@/components/hero/DistortedSphereCanvas'
+
+# Distorted Sphere
+
+An icosahedron with noise-driven vertex distortion — slowly morphs into organic blob shapes while rotating. Perfect as a hero focal point, logo-adjacent decoration, or empty-state filler. The "Apple Vision Pro orb" look.
+
+<ComponentPreview name="distorted-sphere" demo={DistortedSphereCanvas} />
+
+## Usage
+
+```tsx
+import DistortedSphereCanvas from '@/components/hero/DistortedSphereCanvas';
+
+export default function Hero() {
+  return (
+    <section className="relative h-screen bg-[#0a0a0a]">
+      <DistortedSphereCanvas
+        color="#7F77DD"
+        distort={0.4}
+        speed={1}
+      />
+      <div className="relative z-10">{/* your content */}</div>
+    </section>
+  );
+}
+```
+
+## How it works
+
+The geometry is `<icosahedronGeometry args={[1.5, 4]} />` — 5120 faces, dense enough that the distortion looks smooth instead of faceted. Subdivision detail of `4` is the sweet spot; bumping to `5` quadruples vertex count for marginal visual gain.
+
+The morphing is handled by drei's [`MeshDistortMaterial`](https://github.com/pmndrs/drei#meshdistortmaterial), which extends `MeshPhysicalMaterial` and uses `onBeforeCompile` to inject noise-based vertex displacement into the standard PBR shader. The key win: **you get full PBR lighting for free** — metalness, roughness, environment maps, all of it. The alternative would be writing a custom shader and manually implementing Phong/PBR lighting, which is a lot of code.
+
+The wrapping `useFrame` adds a slow per-axis rotation so the distortion is visible from changing angles even when the viewer's still. Without it, a stationary blob morphing in place can look static.
+
+## Notes
+
+- **Lighting setup.** Two point lights tinted with the brand colors (`#7F77DD` and `#EC4899`) plus a neutral directional give the sphere colorful rim highlights without needing an environment map. Adding `<Environment preset="city" />` from drei would give true reflective metalness, but pulls a CDN HDR — for a copy-paste component, the multi-light approach is more portable.
+- **Metalness defaults.** Set to `0.3` (subtly reflective without env), `roughness: 0.25` (smooth but not mirror). Crank metalness to `0.9` with an Environment for chrome-blob effects.
+- **Speed coupling.** The auto-rotation speed and the distortion animation speed are both driven by the same `speed` prop. The material gets `speed * 2` so distortion runs visibly faster than rotation — the morphing is what people notice, the rotation just keeps fresh angles visible.
+- **Accessibility.** `prefers-reduced-motion: reduce` zeroes the speed prop, freezing both rotation and distortion.
+
+## Customization
+
+- **Chrome look.** `metalness={0.95}` + `roughness={0.05}` + an `<Environment preset="warehouse" />`. Premium and reflective.
+- **Translucent blob.** `transmission={0.9}` + `thickness={0.5}` + `roughness={0}` — `MeshPhysicalMaterial` supports refraction. Looks like a moving water drop.
+- **Wireframe.** Add `wireframe` prop on `MeshDistortMaterial` for a sci-fi look.
+- **Pair with a Pointlight color shift** that cycles over time for a "breathing" effect.

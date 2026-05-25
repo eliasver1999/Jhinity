@@ -1,0 +1,51 @@
+import FloatingObjectsCanvas from '@/components/hero/FloatingObjectsCanvas'
+
+# Floating Objects
+
+Six 3D primitives gently tumbling and bobbing in space, with cursor-driven parallax that reads as real depth. Near objects shift more than far ones (the same way the world looks when you move your head), so the scene feels three-dimensional instead of a flat decoration.
+
+<ComponentPreview name="floating-objects" demo={FloatingObjectsCanvas} />
+
+## Usage
+
+```tsx
+import FloatingObjectsCanvas from '@/components/hero/FloatingObjectsCanvas';
+
+export default function Hero() {
+  return (
+    <section className="relative h-screen bg-[#0a0a0a]">
+      <FloatingObjectsCanvas
+        colorA="#7F77DD"
+        colorB="#EC4899"
+        parallaxStrength={0.5}
+        speed={1}
+      />
+      <div className="relative z-10">{/* your content */}</div>
+    </section>
+  );
+}
+```
+
+## How it works
+
+The scene is six hand-placed primitives — sphere, torus knot, octahedron, dodecahedron, icosahedron, capsule — pushed toward the edges so the center stays clear for hero copy. Each one carries its own animation state: a bob offset on a sine wave, an independent rotation speed per axis, and a depth (z) that determines how much it parallaxes.
+
+Three things happen each frame in `useFrame`:
+
+1. **Smooth the cursor.** Raw `pointermove` events would make the parallax jittery. The cursor target gets lerped at `0.06` per frame, so the scene glides.
+2. **Bob.** `y = restY + sin(t * speed + bobOffset) * amplitude` — independent phase per object so they don't move in lockstep.
+3. **Parallax + rotate.** `x = restX + (-mouseX * strength * zNorm)`, where `zNorm` maps the z range `[-2, 1]` to `[0.3, 1.0]`. The minimum of `0.3` keeps the deepest objects subtly parallaxing instead of looking glued in place.
+
+Materials split into two camps: brand-colored objects (`metalness: 0.35`, `roughness: 0.35` — satin) and glass objects (white, `opacity: 0.6`, low roughness — refractive-looking). Lighting is an ambient + a directional key + a colored point light for accent highlights.
+
+## Notes
+
+- **Performance.** Six meshes, ~6k triangles total. Cheap. The hot path is the per-object `useFrame` callback, which is a few math ops per object per frame.
+- **Accessibility.** When `prefers-reduced-motion: reduce`, the wrapper passes `speed={0}`. Objects freeze in their rest positions but still parallax to the cursor (which is a passive depth cue, not motion).
+- **Layout shift.** Counter-parallax means objects can drift up to `parallaxStrength * 1.0` units off their rest position. Crank Parallax to max in the demo to see the upper bound — keep it under `~0.6` for production hero use.
+
+## Customization
+
+Edit the `LAYOUT` array at the top of `FloatingObjects.tsx` to add, remove, or rearrange objects. Each entry specifies the shape, position, scale, material kind, bob phase + amplitude, and rotation speed. Adding a new shape means adding a case to `renderGeometry()` — six are wired up, but any three.js primitive works.
+
+To make the glass objects look glassier, swap `meshStandardMaterial` for `meshPhysicalMaterial` with `transmission={0.9}` and `thickness={0.5}`. Costlier per frame but produces real refraction.

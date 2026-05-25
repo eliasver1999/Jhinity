@@ -1,0 +1,56 @@
+import ShaderGradientCanvas from '@/components/hero/ShaderGradientCanvas'
+
+# Shader Gradient
+
+A slow-moving 4-color gradient with noise-warped UVs. Built on a fullscreen GLSL fragment shader. The canonical SaaS hero background — used by Stripe, Linear, and countless landing pages.
+
+<ComponentPreview name="shader-gradient" demo={ShaderGradientCanvas} />
+
+## Usage
+
+Drop it inside any positioned container — it fills the parent absolutely, just like ParticleField.
+
+```tsx
+import ShaderGradientCanvas from '@/components/hero/ShaderGradientCanvas';
+
+export default function Hero() {
+  return (
+    <section className="relative h-screen">
+      <ShaderGradientCanvas
+        colorA="#7F77DD"
+        colorB="#EC4899"
+        colorC="#06B6D4"
+        colorD="#F59E0B"
+        speed={0.4}
+        scale={1.5}
+      />
+      <div className="relative z-10">{/* your content */}</div>
+    </section>
+  );
+}
+```
+
+## How it works
+
+The shader does three things per fragment:
+
+1. **Warp the UVs.** Two slow-moving 2D simplex-noise fields (one driving x, one driving y) push each pixel's UV by up to ±0.35. This is what gives the gradient its organic, fluid look — without it, you'd just get a static 4-corner mesh.
+2. **Bilinear blend.** With the warped UVs as weights, mix the four corner colors: top edge `mix(A, B, fx)`, bottom edge `mix(D, C, fx)`, then `mix(bottom, top, fy)`.
+3. **Light vignette.** Subtract `distance(uv, 0.5) * 0.22` so edges sit a touch darker. Subtle but it focuses the eye toward the center where text usually lands.
+
+`uTime` is updated every frame in `useFrame`. `uSpeed` and `uScale` are uniforms you can drive from props.
+
+## Notes
+
+- **Performance.** The shader is ~50 instructions and runs at `dpr=[1, 1.5]` — extremely cheap, even on integrated GPUs. Fragment shader complexity dominates; particle count doesn't apply.
+- **Accessibility.** When `prefers-reduced-motion: reduce` is set, the wrapper passes `speed={0}` to freeze the gradient (still renders, just static).
+- **SSR.** Marked `'use client'`. WebGL setup defers to mount, so no hydration mismatch.
+
+## Customization
+
+Beyond the props above:
+
+- Swap `vec2(0.5)` in the vignette line for an offset focal point.
+- Change the warp amplitude (`0.35`) for tighter/looser flow.
+- Add a fifth color by adding `uColorE`, mixing it in via a `smoothstep` on time or noise.
+- For a wave-like banded look instead of organic blobs, replace `smoothstep(0.0, 1.0, warped.x)` with `0.5 + 0.5 * sin(warped.x * 6.28)`.

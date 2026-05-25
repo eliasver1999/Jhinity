@@ -16,6 +16,7 @@ interface Props {
   files: PreviewFile[];
   deps: string[];
   controls: ControlDef[];
+  componentName?: string;
   demo?: DemoComponent;
   children?: ReactNode;
 }
@@ -34,11 +35,14 @@ export default function ComponentPreviewClient({
   files,
   deps,
   controls,
+  componentName,
   demo,
   children,
 }: Props) {
   const [tab, setTab] = useState<Tab>({ kind: 'preview' });
-  const [copied, setCopied] = useState<'code' | 'install' | null>(null);
+  const [copied, setCopied] = useState<'code' | 'install' | 'props' | null>(
+    null
+  );
   const [values, setValues] = useState<Record<string, unknown>>(() =>
     defaultsFor(controls)
   );
@@ -49,7 +53,7 @@ export default function ComponentPreviewClient({
   const showControls =
     controls.length > 0 && DemoComponent && tab.kind === 'preview';
 
-  async function copy(text: string, which: 'code' | 'install') {
+  async function copy(text: string, which: 'code' | 'install' | 'props') {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(which);
@@ -104,19 +108,34 @@ export default function ComponentPreviewClient({
       )}
 
       {showControls && (
-        <div className="border-t border-white/10 bg-white/[0.02] px-4 py-3">
-          <div className="mb-2.5 flex items-center justify-between">
+        <div className="border-t border-white/10 bg-white/[0.02] px-5 py-4">
+          <div className="mb-3.5 flex items-center justify-between">
             <div className="text-[11px] uppercase tracking-wider text-white/40">
               Controls
             </div>
-            <button
-              onClick={reset}
-              className="text-xs text-white/50 transition hover:text-white"
-            >
-              Reset
-            </button>
+            <div className="flex items-center gap-3">
+              {componentName ? (
+                <button
+                  onClick={() =>
+                    copy(
+                      generateJsx(componentName, controls, values),
+                      'props'
+                    )
+                  }
+                  className="rounded border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-white/75 transition hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                >
+                  {copied === 'props' ? 'Copied' : 'Copy props'}
+                </button>
+              ) : null}
+              <button
+                onClick={reset}
+                className="text-xs text-white/50 transition hover:text-white"
+              >
+                Reset
+              </button>
+            </div>
           </div>
-          <div className="grid gap-2.5 sm:grid-cols-2">
+          <div className="grid gap-x-7 gap-y-3 sm:grid-cols-2">
             {controls.map((c) => (
               <Control
                 key={c.name}
@@ -153,6 +172,33 @@ export default function ComponentPreviewClient({
   );
 }
 
+function formatSliderValue(v: number, step: number): string {
+  if (step >= 1) return Math.round(v).toString();
+  if (step >= 0.1) return v.toFixed(1);
+  if (step >= 0.01) return v.toFixed(2);
+  return v.toFixed(3);
+}
+
+function generateJsx(
+  componentName: string,
+  controls: ControlDef[],
+  values: Record<string, unknown>
+): string {
+  const changed = controls.filter((c) => values[c.name] !== c.default);
+  if (changed.length === 0) {
+    return `<${componentName} />`;
+  }
+  const lines = changed.map((c) => {
+    const v = values[c.name];
+    if (c.kind === 'color') {
+      return `  ${c.name}="${v}"`;
+    }
+    const num = typeof v === 'number' ? v : c.default;
+    return `  ${c.name}={${formatSliderValue(num, c.step)}}`;
+  });
+  return `<${componentName}\n${lines.join('\n')}\n/>`;
+}
+
 function Control({
   def,
   value,
@@ -165,8 +211,10 @@ function Control({
   if (def.kind === 'range') {
     const v = typeof value === 'number' ? value : def.default;
     return (
-      <label className="flex items-center gap-3 text-xs">
-        <span className="w-24 shrink-0 text-white/60">{def.label}</span>
+      <label className="flex items-center gap-3 py-0.5 text-xs">
+        <span className="w-24 shrink-0 text-right text-white/60">
+          {def.label}
+        </span>
         <input
           type="range"
           min={def.min}
@@ -174,25 +222,29 @@ function Control({
           step={def.step}
           value={v}
           onChange={(e) => onChange(parseFloat(e.target.value))}
-          className="flex-1 accent-[#7F77DD]"
+          className="jhinity-slider min-w-0 flex-1"
         />
-        <span className="w-10 shrink-0 text-right font-mono text-white/80">
-          {v.toFixed(2)}
+        <span className="w-9 shrink-0 text-right font-mono tabular-nums text-white/80">
+          {formatSliderValue(v, def.step)}
         </span>
       </label>
     );
   }
   const v = typeof value === 'string' ? value : def.default;
   return (
-    <label className="flex items-center gap-3 text-xs">
-      <span className="w-24 shrink-0 text-white/60">{def.label}</span>
+    <label className="flex items-center gap-3 py-0.5 text-xs">
+      <span className="w-24 shrink-0 text-right text-white/60">
+        {def.label}
+      </span>
       <input
         type="color"
         value={v}
         onChange={(e) => onChange(e.target.value)}
-        className="h-7 w-10 shrink-0 cursor-pointer rounded border border-white/15 bg-transparent"
+        className="jhinity-color h-7 w-7 shrink-0"
       />
-      <span className="flex-1 font-mono text-white/80">{v}</span>
+      <span className="flex-1 font-mono uppercase tabular-nums text-white/70">
+        {v}
+      </span>
     </label>
   );
 }
