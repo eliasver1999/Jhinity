@@ -1,7 +1,7 @@
 'use client';
 
+import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import ManagedCanvas from '@/components/shared/ManagedCanvas';
-import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import HoverRevealMaterial from './HoverRevealMaterial';
 
 interface HoverRevealCardProps {
@@ -19,9 +19,7 @@ export default function HoverRevealCard({
     speed = 0.5,
     className = '',
 }: HoverRevealCardProps) {
-    // Shared mutable target: outer hover events write to it, the R3F scene
-    // reads from it in useFrame and lerps the actual uniform.
-    const hoverRef = useRef(0);
+    const [isHovered, setIsHovered] = useState(false);
     const [reducedMotion, setReducedMotion] = useState(false);
 
     useEffect(() => {
@@ -34,17 +32,10 @@ export default function HoverRevealCard({
 
     const effectiveSpeed = reducedMotion ? 0 : speed;
 
-    function onEnter() {
-        if (!reducedMotion) hoverRef.current = 1;
-    }
-    function onLeave() {
-        hoverRef.current = 0;
-    }
-
     return (
         <div
-            onPointerEnter={onEnter}
-            onPointerLeave={onLeave}
+            onMouseEnter={() => !reducedMotion && setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             className={`relative overflow-hidden rounded-2xl border border-white/10 ${className}`}
         >
             <ManagedCanvas
@@ -54,7 +45,7 @@ export default function HoverRevealCard({
             >
                 <Suspense fallback={null}>
                     <HoverRevealMaterial
-                        hoverRef={hoverRef}
+                        isHovered={isHovered}
                         colorA={colorA}
                         colorB={colorB}
                         speed={effectiveSpeed}

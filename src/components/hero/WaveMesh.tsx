@@ -124,10 +124,8 @@ export default function WaveMesh({
         uniforms.uFrequency.value = frequency;
     }, [frequency, uniforms]);
 
-    useFrame((state) => {
-        // Absolute time instead of accumulated delta: more robust across
-        // HMR reloads (no drift) and easier to reason about.
-        uniforms.uTime.value = state.clock.elapsedTime * speed;
+    useFrame((_state, delta) => {
+        uniforms.uTime.value += delta * speed;
     });
 
     return (

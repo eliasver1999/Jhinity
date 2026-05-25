@@ -2,11 +2,11 @@
 
 import { ScreenQuad } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
 interface HoverRevealMaterialProps {
-    hoverRef: MutableRefObject<number>;
+    isHovered: boolean;
     colorA: string;
     colorB: string;
     speed: number;
@@ -89,7 +89,7 @@ const fragmentShader = /* glsl */ `
 `;
 
 export default function HoverRevealMaterial({
-    hoverRef,
+    isHovered,
     colorA,
     colorB,
     speed,
@@ -117,9 +117,10 @@ export default function HoverRevealMaterial({
 
     useFrame((_state, delta) => {
         uniforms.uTime.value += delta * speed;
-        // Lerp current hover toward target so the reveal eases in/out.
-        hoverCurrent.current +=
-            (hoverRef.current - hoverCurrent.current) * 0.08;
+        // Lerp current hover toward target (1 when hovered, 0 otherwise)
+        // so the reveal eases in/out instead of snapping.
+        const target = isHovered ? 1 : 0;
+        hoverCurrent.current += (target - hoverCurrent.current) * 0.08;
         uniforms.uHover.value = hoverCurrent.current;
     });
 
