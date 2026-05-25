@@ -1,6 +1,6 @@
 'use client';
 
-import { Canvas } from '@react-three/fiber';
+import ManagedCanvas from '@/components/shared/ManagedCanvas';
 import { Suspense, useEffect, useState } from 'react';
 import ShaderGradient from './ShaderGradient';
 
@@ -35,7 +35,7 @@ export default function ShaderGradientCanvas({
 
     return (
         <div className="absolute inset-0 -z-0">
-            <Canvas
+            <ManagedCanvas
                 dpr={[1, 1.5]}
                 gl={{ antialias: false, alpha: false }}
             >
@@ -46,7 +46,7 @@ export default function ShaderGradientCanvas({
                         mouseIntensity={effectiveMouseIntensity}
                     />
                 </Suspense>
-            </Canvas>
+            </ManagedCanvas>
         </div>
     );
 }

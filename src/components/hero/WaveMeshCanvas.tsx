@@ -1,6 +1,6 @@
 'use client';
 
-import { Canvas } from '@react-three/fiber';
+import ManagedCanvas from '@/components/shared/ManagedCanvas';
 import { Suspense, useEffect, useState } from 'react';
 import WaveMesh from './WaveMesh';
 
@@ -30,7 +30,7 @@ export default function WaveMeshCanvas({
 
     return (
         <div className="absolute inset-0 -z-0">
-            <Canvas
+            <ManagedCanvas
                 camera={{ position: [0, 2.5, 5], fov: 55 }}
                 dpr={[1, 1.5]}
                 gl={{ antialias: true, alpha: true }}
@@ -38,7 +38,7 @@ export default function WaveMeshCanvas({
                 <Suspense fallback={null}>
                     <WaveMesh {...rest} speed={effectiveSpeed} />
                 </Suspense>
-            </Canvas>
+            </ManagedCanvas>
         </div>
     );
 }

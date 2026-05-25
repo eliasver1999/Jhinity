@@ -15,7 +15,7 @@ export const docsNav: DocsNavSection[] = [
     items: [{ title: 'Introduction', href: '/docs' }],
   },
   {
-    title: 'Components',
+    title: 'Hero Backgrounds',
     items: [
       {
         title: 'Distorted Sphere',
@@ -40,6 +40,21 @@ export const docsNav: DocsNavSection[] = [
       {
         title: 'Particle Field',
         href: '/docs/components/particle-field',
+        badge: 'new',
+      },
+    ],
+  },
+  {
+    title: 'Cards',
+    items: [
+      {
+        title: 'Hover Reveal Card',
+        href: '/docs/components/hover-reveal-card',
+        badge: 'new',
+      },
+      {
+        title: 'Tilt Card',
+        href: '/docs/components/tilt-card',
         badge: 'new',
       },
     ],

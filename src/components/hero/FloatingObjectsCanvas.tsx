@@ -1,6 +1,6 @@
 'use client';
 
-import { Canvas } from '@react-three/fiber';
+import ManagedCanvas from '@/components/shared/ManagedCanvas';
 import { Suspense, useEffect, useState } from 'react';
 import FloatingObjects from './FloatingObjects';
 
@@ -29,7 +29,7 @@ export default function FloatingObjectsCanvas({
 
     return (
         <div className="absolute inset-0 -z-0">
-            <Canvas
+            <ManagedCanvas
                 camera={{ position: [0, 0, 7], fov: 50 }}
                 dpr={[1, 2]}
                 gl={{ antialias: true, alpha: true }}
@@ -37,7 +37,7 @@ export default function FloatingObjectsCanvas({
                 <Suspense fallback={null}>
                     <FloatingObjects {...rest} speed={effectiveSpeed} />
                 </Suspense>
-            </Canvas>
+            </ManagedCanvas>
         </div>
     );
 }

@@ -14,9 +14,9 @@ interface WaveMeshProps {
 
 const DEFAULT_COLOR_A = '#7F77DD';
 const DEFAULT_COLOR_B = '#1D9E75';
-const DEFAULT_AMPLITUDE = 0.5;
-const DEFAULT_FREQUENCY = 1.0;
-const DEFAULT_SPEED = 0.5;
+const DEFAULT_AMPLITUDE = 1.2;
+const DEFAULT_FREQUENCY = 0.4;
+const DEFAULT_SPEED = 1.0;
 
 const vertexShader = /* glsl */ `
   uniform float uTime;
@@ -60,14 +60,15 @@ const vertexShader = /* glsl */ `
 
   void main() {
     vec3 pos = position;
-    // Layered noise for richer wave structure.
+    // Two layered noise fields. Time multipliers cranked so peaks travel
+    // visibly across the surface even at low speed values.
     float n1 = snoise(vec2(
-      pos.x * uFrequency + uTime * 0.3,
-      pos.y * uFrequency + uTime * 0.2
+      pos.x * uFrequency + uTime * 3.0,
+      pos.y * uFrequency + uTime * 2.4
     ));
     float n2 = snoise(vec2(
-      pos.x * uFrequency * 2.1 + uTime * 0.5,
-      pos.y * uFrequency * 2.1 - uTime * 0.4
+      pos.x * uFrequency * 2.1 + uTime * 4.5,
+      pos.y * uFrequency * 2.1 - uTime * 3.6
     )) * 0.4;
     float elevation = (n1 + n2);
     pos.z += elevation * uAmplitude;
@@ -123,8 +124,10 @@ export default function WaveMesh({
         uniforms.uFrequency.value = frequency;
     }, [frequency, uniforms]);
 
-    useFrame((_state, delta) => {
-        uniforms.uTime.value += delta * speed;
+    useFrame((state) => {
+        // Absolute time instead of accumulated delta: more robust across
+        // HMR reloads (no drift) and easier to reason about.
+        uniforms.uTime.value = state.clock.elapsedTime * speed;
     });
 
     return (

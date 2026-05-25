@@ -1,6 +1,6 @@
 'use client';
 
-import { Canvas } from '@react-three/fiber';
+import ManagedCanvas from '@/components/shared/ManagedCanvas';
 import { Suspense, useEffect, useState } from 'react';
 import ParticleField from './ParticleField';
 
@@ -42,7 +42,7 @@ export default function ParticleFieldCanvas({
 
     return (
         <div className="absolute inset-0 -z-0">
-            <Canvas
+            <ManagedCanvas
                 camera={{ position: [0, 0, 5], fov: 60 }}
                 dpr={[1, 2]}
                 gl={{ antialias: true, alpha: true }}
@@ -59,7 +59,7 @@ export default function ParticleFieldCanvas({
                         rotationSpeed={rotationSpeed}
                     />
                 </Suspense>
-            </Canvas>
+            </ManagedCanvas>
         </div>
     );
 }

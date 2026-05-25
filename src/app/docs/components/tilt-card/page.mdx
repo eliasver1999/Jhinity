@@ -1,0 +1,79 @@
+import TiltCardDemo from '@/components/cards/TiltCardDemo'
+
+# Tilt Card
+
+A 3D-perspective hover card — the cursor leans on the surface and the card tilts as if it were a physical object. Optional cursor-tracking glare highlight. Pure CSS transforms, no WebGL. Drop any content inside.
+
+<ComponentPreview name="tilt-card" demo={TiltCardDemo} />
+
+## Usage
+
+`TiltCard` is a generic wrapper — drop any card content inside.
+
+```tsx
+import TiltCard from '@/components/cards/TiltCard';
+
+export default function FeatureGrid() {
+  return (
+    <div className="grid grid-cols-3 gap-6">
+      <TiltCard maxTilt={12} glare>
+        <article className="rounded-2xl border bg-card p-6">
+          <h3>Feature one</h3>
+          <p>Description...</p>
+        </article>
+      </TiltCard>
+      {/* repeat */}
+    </div>
+  );
+}
+```
+
+## Why no React state
+
+The naive implementation updates React state on every `pointermove` and re-renders the card. That's 100+ re-renders per second under a moving cursor — slow, janky, and bad for batteries.
+
+`TiltCard` instead uses refs and mutates the inline `transform` style directly inside the event handler. React never re-renders during the tilt. The only React state is `reducedMotion`, which only changes when the OS preference changes.
+
+```tsx
+function onMove(e) {
+  const rect = cardRef.current.getBoundingClientRect();
+  const cx = (e.clientX - rect.left) / rect.width;
+  const cy = (e.clientY - rect.top) / rect.height;
+
+  const rotX = -(cy - 0.5) * maxTilt * 2;
+  const rotY = (cx - 0.5) * maxTilt * 2;
+
+  innerRef.current.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale3d(${scale}, ${scale}, 1)`;
+}
+```
+
+The transition is short (`80ms ease-out`) during hover for a "rubber-band" feel that smooths jittery cursor input, then long (`500ms ease`) on leave so the card glides back to flat.
+
+## The glare
+
+A radial gradient at the cursor position, rendered as an absolute-positioned overlay with `mix-blend-mode: soft-light`. The gradient fades to transparent at 60% of the farthest-corner distance — well inside the card bounds — so the corners stay transparent regardless of the card's border-radius. No need to match the wrapper's radius to the card's.
+
+```tsx
+glareRef.current.style.background = `radial-gradient(
+  circle at ${cx * 100}% ${cy * 100}%,
+  rgba(255, 255, 255, ${glareIntensity}) 0%,
+  transparent 60%
+)`;
+```
+
+`soft-light` blend mode means the glare brightens light areas and barely affects dark ones — looks natural on colored backgrounds, doesn't blow out highlights.
+
+## Notes
+
+- **Perspective.** Higher value = subtler tilt (the "vanishing point" is further away). `1000px` is the web sweet spot; under `500px` looks fish-eye, over `2000px` is barely 3D. Card-level perspective (not on the parent) means each card has its own vanishing point.
+- **`transformStyle: preserve-3d`** on the inner wrapper preserves the 3D context for any child that uses `translateZ` — useful if you want internal elements to lift off the card surface.
+- **Touch.** Pointer Events fire on touch, so this works on mobile — tap-and-drag tilts the card. Slightly less natural than desktop but free.
+- **Accessibility.** `prefers-reduced-motion: reduce` short-circuits the move handler entirely. The card stays flat.
+
+## Customization
+
+- **Lift on hover** — set `scale` to `1.04`+ for a stronger zoom-in.
+- **Subtle product look** — drop `maxTilt` to `6`, `glareIntensity` to `0.2`.
+- **Magazine cover look** — `maxTilt={20}`, `perspective={600}`, `glareIntensity={0.6}`.
+- **Disable the glare** — pass `glare={false}`. The wrapper still rotates.
+- **Constraint by axis** — replace `rotateX(${rotX}deg) rotateY(${rotY}deg)` with just `rotateY` for horizontal-only tilt (gives a "book page" feel).

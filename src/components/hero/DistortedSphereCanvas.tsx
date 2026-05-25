@@ -1,6 +1,6 @@
 'use client';
 
-import { Canvas } from '@react-three/fiber';
+import ManagedCanvas from '@/components/shared/ManagedCanvas';
 import { Suspense, useEffect, useState } from 'react';
 import DistortedSphere from './DistortedSphere';
 
@@ -28,7 +28,7 @@ export default function DistortedSphereCanvas({
 
     return (
         <div className="absolute inset-0 -z-0">
-            <Canvas
+            <ManagedCanvas
                 camera={{ position: [0, 0, 4], fov: 50 }}
                 dpr={[1, 2]}
                 gl={{ antialias: true, alpha: true }}
@@ -36,7 +36,7 @@ export default function DistortedSphereCanvas({
                 <Suspense fallback={null}>
                     <DistortedSphere {...rest} speed={effectiveSpeed} />
                 </Suspense>
-            </Canvas>
+            </ManagedCanvas>
         </div>
     );
 }

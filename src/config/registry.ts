@@ -32,6 +32,93 @@ export type RegistryEntry = {
 };
 
 export const registry: Record<string, RegistryEntry> = {
+  'hover-reveal-card': {
+    slug: 'hover-reveal-card',
+    title: 'Hover Reveal Card',
+    componentName: 'HoverRevealCardDemo',
+    files: [
+      {
+        name: 'HoverRevealCard.tsx',
+        relPath: 'src/components/cards/HoverRevealCard.tsx',
+      },
+      {
+        name: 'HoverRevealMaterial.tsx',
+        relPath: 'src/components/cards/HoverRevealMaterial.tsx',
+      },
+      {
+        name: 'HoverRevealCardDemo.tsx',
+        relPath: 'src/components/cards/HoverRevealCardDemo.tsx',
+      },
+    ],
+    deps: ['three', '@react-three/fiber', '@react-three/drei'],
+    controls: [
+      { name: 'colorA', kind: 'color', label: 'Color A', default: '#7F77DD' },
+      { name: 'colorB', kind: 'color', label: 'Color B', default: '#EC4899' },
+      {
+        name: 'speed',
+        kind: 'range',
+        label: 'Speed',
+        min: 0,
+        max: 2,
+        step: 0.05,
+        default: 0.5,
+      },
+    ],
+  },
+  'tilt-card': {
+    slug: 'tilt-card',
+    title: 'Tilt Card',
+    componentName: 'TiltCardDemo',
+    files: [
+      {
+        name: 'TiltCard.tsx',
+        relPath: 'src/components/cards/TiltCard.tsx',
+      },
+      {
+        name: 'TiltCardDemo.tsx',
+        relPath: 'src/components/cards/TiltCardDemo.tsx',
+      },
+    ],
+    deps: [],
+    controls: [
+      {
+        name: 'maxTilt',
+        kind: 'range',
+        label: 'Max tilt',
+        min: 0,
+        max: 30,
+        step: 1,
+        default: 12,
+      },
+      {
+        name: 'perspective',
+        kind: 'range',
+        label: 'Perspective',
+        min: 300,
+        max: 2500,
+        step: 50,
+        default: 1000,
+      },
+      {
+        name: 'glareIntensity',
+        kind: 'range',
+        label: 'Glare',
+        min: 0,
+        max: 1,
+        step: 0.05,
+        default: 0.4,
+      },
+      {
+        name: 'scale',
+        kind: 'range',
+        label: 'Hover scale',
+        min: 1,
+        max: 1.1,
+        step: 0.01,
+        default: 1.02,
+      },
+    ],
+  },
   'distorted-sphere': {
     slug: 'distorted-sphere',
     title: 'Distorted Sphere',
@@ -94,7 +181,7 @@ export const registry: Record<string, RegistryEntry> = {
         min: 0,
         max: 2,
         step: 0.05,
-        default: 0.5,
+        default: 1.2,
       },
       {
         name: 'frequency',
@@ -103,7 +190,7 @@ export const registry: Record<string, RegistryEntry> = {
         min: 0.2,
         max: 3,
         step: 0.05,
-        default: 1.0,
+        default: 0.4,
       },
       {
         name: 'speed',
@@ -112,7 +199,7 @@ export const registry: Record<string, RegistryEntry> = {
         min: 0,
         max: 2,
         step: 0.05,
-        default: 0.5,
+        default: 1.0,
       },
     ],
   },

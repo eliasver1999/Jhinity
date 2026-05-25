@@ -1,0 +1,74 @@
+import HoverRevealCardDemo from '@/components/cards/HoverRevealCardDemo'
+
+# Hover Reveal Card
+
+A card with a noise-mask WebGL background that reveals on hover. Two visual states — a muted "cover" and a vibrant "reveal" — are blended pixel-by-pixel using a slowly-drifting noise field. The reveal blooms organically across the card surface as the cursor enters, rather than fading uniformly. Hover the card to see it.
+
+<ComponentPreview name="hover-reveal-card" demo={HoverRevealCardDemo} />
+
+## Usage
+
+```tsx
+import HoverRevealCard from '@/components/cards/HoverRevealCard';
+
+export default function FeatureGrid() {
+  return (
+    <div className="grid grid-cols-3 gap-6">
+      <HoverRevealCard colorA="#7F77DD" colorB="#EC4899" className="h-64">
+        <div className="p-6">
+          <h3 className="text-white">Edge functions</h3>
+          <p className="text-white/70">Sub-50ms anywhere.</p>
+        </div>
+      </HoverRevealCard>
+      {/* repeat */}
+    </div>
+  );
+}
+```
+
+## How it works
+
+The card is a regular `<div>` with `overflow-hidden` containing two stacked layers:
+
+1. A **`<Canvas>` filling the entire card** — runs a fullscreen `ScreenQuad` shader (the same NDC-quad trick from the Shader Gradient).
+2. **Your HTML content on top** — anything you pass as children sits at `z-10` above the canvas, so all your CSS, fonts, links work normally. Title, description, CTAs, images — they're all just children.
+
+The shader does three things per fragment:
+
+```glsl
+vec3 cover  = mix(colorA * 0.18, colorB * 0.18, uv.y);   // muted idle
+vec3 reveal = warped two-color gradient + brightness lift;
+float maskNoise = snoise(uv * 2.0 + drifting offsets) * 0.5 + 0.5;
+float effectiveHover = mix(-0.25, 1.25, uHover);
+float mask = smoothstep(maskNoise - 0.08, maskNoise + 0.08, effectiveHover);
+gl_FragColor = vec4(mix(cover, reveal, mask), 1.0);
+```
+
+The `mix(-0.25, 1.25, uHover)` trick is the load-bearing part. The naïve approach (`uHover` directly) leaves a sliver of partial-reveal at the edges (when uHover=0, ~50% of pixels are already partially uncovered). Remapping past `[0, 1]` ensures uHover=0 is fully cover and uHover=1 is fully reveal.
+
+## Wiring hover events across React → R3F
+
+There's a subtle problem: hover events fire on the outer `<div>` (React DOM), but the shader uniform lives in a React Three Fiber scene that re-renders on its own schedule. Updating React state on hover would be fine for this case (only two values, 0 and 1) — but the lerp toward the target wants to happen on every frame, and putting an animation loop in React state means re-rendering 60 times per second.
+
+The pattern: a **shared mutable ref** (`hoverRef.current = 0 | 1`). The outer card mutates it in `onPointerEnter`/`onPointerLeave`. The inner R3F component reads it in `useFrame` and lerps a local `hoverCurrent` toward it:
+
+```tsx
+hoverCurrent.current += (hoverRef.current - hoverCurrent.current) * 0.08;
+uniforms.uHover.value = hoverCurrent.current;
+```
+
+No React state, no re-renders, smooth animation. Same pattern as the cursor tracking on the Shader Gradient and Floating Objects.
+
+## Notes
+
+- **WebGL context per card.** Each card has its own `<Canvas>`. Browsers limit WebGL contexts to ~16 per page. For dense grids (20+ cards), refactor to a single shared canvas with instanced meshes or a 2D texture grid.
+- **`alpha: false`** on the Canvas — the shader fills every pixel, so there's no need for transparency, and skipping the alpha channel saves a tiny amount of GPU work.
+- **`dpr: [1, 1.5]`** — the noise patterns don't benefit from 2× pixel density. Capping DPR cuts fragment shader cost ~4× on high-DPR displays.
+- **Accessibility.** `prefers-reduced-motion: reduce` zeroes both the underlying time-driven animation AND short-circuits the hover handler, so the card stays in its cover state.
+
+## Customization
+
+- **Sharper reveal edge** — drop the `0.08` in `smoothstep(maskNoise - 0.08, maskNoise + 0.08, ...)` to `0.02`. The reveal becomes crisp instead of feathery.
+- **Three-color gradient** — add `uColorC` and compose `reveal` with two `mix()` calls.
+- **Different noise pattern** — replace `uv * 2.0` (the noise scale) with `uv * 4.0` for finer-grained pebble-like patches, or `uv * 1.0` for big lava-lamp blobs.
+- **Click-to-pin reveal** — track an `isPinned` state in React, OR `hoverRef.current = 1` on click instead of hover.
