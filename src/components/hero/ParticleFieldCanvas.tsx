@@ -4,7 +4,21 @@ import { Canvas } from '@react-three/fiber';
 import { Suspense, useEffect, useState } from 'react';
 import ParticleField from './ParticleField';
 
-export default function ParticleFieldCanvas() {
+interface ParticleFieldCanvasProps {
+    colorA?: string;
+    colorB?: string;
+    radius?: number;
+    maxPush?: number;
+    rotationSpeed?: number;
+}
+
+export default function ParticleFieldCanvas({
+    colorA,
+    colorB,
+    radius,
+    maxPush,
+    rotationSpeed,
+}: ParticleFieldCanvasProps) {
     const [reducedMotion, setReducedMotion] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -24,7 +38,6 @@ export default function ParticleFieldCanvas() {
         };
     }, []);
 
-    // Particle count scales with device
     const count = isMobile ? 1200 : 3000;
 
     return (
@@ -39,6 +52,11 @@ export default function ParticleFieldCanvas() {
                         count={count}
                         reducedMotion={reducedMotion}
                         interactive={!isMobile}
+                        colorA={colorA}
+                        colorB={colorB}
+                        radius={radius}
+                        maxPush={maxPush}
+                        rotationSpeed={rotationSpeed}
                     />
                 </Suspense>
             </Canvas>

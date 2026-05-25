@@ -8,22 +8,35 @@ interface ParticleFieldProps {
     count: number;
     reducedMotion: boolean;
     interactive: boolean;
+    colorA?: string;
+    colorB?: string;
+    radius?: number;
+    maxPush?: number;
+    rotationSpeed?: number;
 }
+
+const DEFAULT_COLOR_A = '#7F77DD';
+const DEFAULT_COLOR_B = '#1D9E75';
+const DEFAULT_RADIUS = 1.5;
+const DEFAULT_MAX_PUSH = 0.9;
+const DEFAULT_ROTATION_SPEED = 1;
 
 export default function ParticleField({
     count,
     reducedMotion,
     interactive,
+    colorA = DEFAULT_COLOR_A,
+    colorB = DEFAULT_COLOR_B,
+    radius = DEFAULT_RADIUS,
+    maxPush = DEFAULT_MAX_PUSH,
+    rotationSpeed = DEFAULT_ROTATION_SPEED,
 }: ParticleFieldProps) {
     const pointsRef = useRef<THREE.Points>(null);
-    // Start the cursor off-screen so nothing warps until the user actually moves.
     const mouseWorld = useRef(new THREE.Vector3(999, 999, 0));
     const mouseLocal = useRef(new THREE.Vector3());
     const invMatrix = useRef(new THREE.Matrix4());
     const { viewport } = useThree();
 
-    // Track the cursor on window — the Canvas is behind a higher-z overlay,
-    // so pointer events never reach R3F's built-in state.mouse.
     useEffect(() => {
         if (!interactive || reducedMotion) return;
 
@@ -53,17 +66,17 @@ export default function ParticleField({
         const colors = new Float32Array(count * 3);
         const originalPositions = new Float32Array(count * 3);
 
-        const colorA = new THREE.Color('#7F77DD'); // purple
-        const colorB = new THREE.Color('#1D9E75'); // teal
+        const cA = new THREE.Color(DEFAULT_COLOR_A);
+        const cB = new THREE.Color(DEFAULT_COLOR_B);
 
         for (let i = 0; i < count; i++) {
-            const radius = 2 + Math.random() * 1.5;
+            const r = 2 + Math.random() * 1.5;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
 
-            const x = radius * Math.sin(phi) * Math.cos(theta);
-            const y = radius * Math.sin(phi) * Math.sin(theta);
-            const z = radius * Math.cos(phi);
+            const x = r * Math.sin(phi) * Math.cos(theta);
+            const y = r * Math.sin(phi) * Math.sin(theta);
+            const z = r * Math.cos(phi);
 
             positions[i * 3] = x;
             positions[i * 3 + 1] = y;
@@ -72,7 +85,7 @@ export default function ParticleField({
             originalPositions[i * 3 + 1] = y;
             originalPositions[i * 3 + 2] = z;
 
-            const mixed = colorA.clone().lerp(colorB, (y + 3) / 6);
+            const mixed = cA.clone().lerp(cB, (y + 3) / 6);
             colors[i * 3] = mixed.r;
             colors[i * 3 + 1] = mixed.g;
             colors[i * 3 + 2] = mixed.b;
@@ -81,20 +94,35 @@ export default function ParticleField({
         return { positions, colors, originalPositions };
     }, [count]);
 
+    // Recompute color buffer when the gradient endpoints change.
+    useEffect(() => {
+        const cA = new THREE.Color(colorA);
+        const cB = new THREE.Color(colorB);
+        for (let i = 0; i < count; i++) {
+            const y = originalPositions[i * 3 + 1];
+            const mixed = cA.clone().lerp(cB, (y + 3) / 6);
+            colors[i * 3] = mixed.r;
+            colors[i * 3 + 1] = mixed.g;
+            colors[i * 3 + 2] = mixed.b;
+        }
+        const geom = pointsRef.current?.geometry;
+        if (geom) {
+            const attr = geom.attributes.color as THREE.BufferAttribute;
+            attr.needsUpdate = true;
+        }
+    }, [colorA, colorB, count, colors, originalPositions]);
+
     useFrame((_state, delta) => {
         if (!pointsRef.current) return;
 
-        if (!reducedMotion) {
-            pointsRef.current.rotation.y += delta * 0.05;
-            pointsRef.current.rotation.x += delta * 0.02;
-            // Refresh matrixWorld immediately so the mouse transform below
-            // uses the current frame's rotation, not last frame's.
+        if (!reducedMotion && rotationSpeed > 0) {
+            pointsRef.current.rotation.y += delta * 0.05 * rotationSpeed;
+            pointsRef.current.rotation.x += delta * 0.02 * rotationSpeed;
             pointsRef.current.updateMatrixWorld();
         }
 
         if (!interactive || reducedMotion) return;
 
-        // World mouse → local frame of the rotating Points object.
         invMatrix.current.copy(pointsRef.current.matrixWorld).invert();
         mouseLocal.current
             .copy(mouseWorld.current)
@@ -106,9 +134,7 @@ export default function ParticleField({
 
         const mx = mouseLocal.current.x;
         const my = mouseLocal.current.y;
-        const radius = 1.5;
         const radiusSq = radius * radius;
-        const maxPush = 0.9;
 
         for (let i = 0; i < count; i++) {
             const ix = i * 3;
@@ -121,7 +147,6 @@ export default function ParticleField({
             const distSq = dx * dx + dy * dy;
 
             if (distSq > radiusSq) {
-                // Outside influence — snap to rest position.
                 positions[ix] = ox;
                 positions[ix + 1] = oy;
                 positions[ix + 2] = oz;

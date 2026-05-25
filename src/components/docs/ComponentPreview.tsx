@@ -1,17 +1,26 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import type { ComponentType, ReactNode } from 'react';
 import { registry } from '@/config/registry';
 import { highlight } from '@/lib/highlight';
 import ComponentPreviewClient, {
   type PreviewFile,
 } from './ComponentPreviewClient';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type DemoComponent = ComponentType<any>;
+
 interface Props {
   name: string;
-  children: React.ReactNode;
+  demo?: DemoComponent;
+  children?: ReactNode;
 }
 
-export default async function ComponentPreview({ name, children }: Props) {
+export default async function ComponentPreview({
+  name,
+  demo,
+  children,
+}: Props) {
   const entry = registry[name];
   if (!entry) {
     throw new Error(
@@ -28,7 +37,12 @@ export default async function ComponentPreview({ name, children }: Props) {
   );
 
   return (
-    <ComponentPreviewClient files={files} deps={entry.deps}>
+    <ComponentPreviewClient
+      files={files}
+      deps={entry.deps}
+      controls={entry.controls ?? []}
+      demo={demo}
+    >
       {children}
     </ComponentPreviewClient>
   );
