@@ -4,7 +4,8 @@
       "Bash(npm install *)",
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:3000/docs\" -UseBasicParsing -TimeoutSec 30; \"STATUS=$\\($r.StatusCode\\)\"; \"LEN=$\\($r.Content.Length\\)\"; if \\($r.Content -match 'Introduction'\\) { 'BODY_OK: contains Introduction heading' } else { 'BODY_MISSING: Introduction not in response' } } catch { \"ERR=$\\($_.Exception.Message\\)\" })",
       "PowerShell(Select-String -Path .next\\\\dev\\\\logs\\\\next-development.log -Pattern 'docs|mdx|ENOENT|Cannot find|Error compiling|Failed to compile' | Select-Object -Last 30 | ForEach-Object { $_.Line })",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx tsc *)"
     ]
   }
 }

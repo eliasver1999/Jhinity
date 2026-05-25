@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import ParticleFieldCanvas from '@/components/hero/ParticleFieldCanvas';
 
 export default function Home() {
@@ -9,14 +10,22 @@ export default function Home() {
       {/* Foreground content */}
       <div className="relative z-10 flex min-h-screen flex-col">
         <nav className="flex items-center justify-between px-7 py-5">
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#7F77DD] text-sm font-medium">
               J
             </div>
             <span className="text-sm font-medium">Jhinity</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-5 text-sm text-white/65">
-            <a href="https://github.com" className="hover:text-white">
+            <Link href="/docs" className="hover:text-white">
+              Docs
+            </Link>
+            <a
+              href="https://github.com"
+              className="hover:text-white"
+              target="_blank"
+              rel="noreferrer"
+            >
               GitHub
             </a>
           </div>
@@ -44,7 +53,7 @@ export default function Home() {
               type="email"
               required
               placeholder="you@company.com"
-              className="flex-1 rounded-md border border-white/15 bg-white/5 px-3.5 py-2.5 text-sm placeholder:text-white/30 focus:border-white/40 focus:outline-none"
+              className="flex-1 rounded-md border border-white/15 bg-black/40 px-3.5 py-2.5 text-sm backdrop-blur-md placeholder:text-white/40 transition-colors focus:border-white/40 focus:bg-black/60 focus:outline-none"
             />
             <button
               type="submit"
